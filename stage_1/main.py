@@ -5,6 +5,9 @@ train a SequenceClassification model by using the IMDb dataset
 import torch.optim as optim
 import numpy as np
 
+from transformers import BertTokenizer, BertForSequenceClassification
+from peft import LoraConfig, get_peft_model, TaskType
+
 from model import *
 from utils import *
 from parser import parameter_parser
@@ -25,14 +28,29 @@ def train(args):
     dataloader_test = Data.DataLoader(dataset_test, args.batch_size, True)
     logging.info('data load done!')
     # model
-    model = MySequenceClassificationModel(model='bert-base-uncased', num_labels=2)
+    model = BertForSequenceClassification.from_pretrained(pretrained_model_name_or_path='bert-base-uncased',
+                                                          num_labels=2)
     model.to(device)
     logging.info('model load done!')
+
+    # args check: freeze and peft
+    if args.freeze and args.peft:
+        raise ValueError('freeze and peft cannot be set at the same time!')
+
     # freeze
     if args.freeze:
-        for param in model.bert.bert.parameters():
+        for param in model.bert.parameters():
             param.requires_grad = False
         logging.info('freeze done!')
+
+    # peft
+    if args.peft:
+        config = LoraConfig(task_type=TaskType.SEQ_CLS,
+                            lora_dropout=0.01)
+
+        model = get_peft_model(model, config)
+        logging.info('peft done!')
+        model.print_trainable_parameters()
 
     # optimizer
     if args.freeze:
@@ -62,12 +80,15 @@ def train(args):
                 label = label.to(device)
                 # loss
                 optimizer.zero_grad()
-                loss = model.loss(input_ids, attention_mask, token_type_ids, label)
-                loss.backward()
+                loss_sc = model(input_ids=input_ids,
+                                attention_mask=attention_mask,
+                                token_type_ids=token_type_ids,
+                                labels=label).loss
+                loss_sc.backward()
                 optimizer.step()
-                loss_collector.append(loss.item())
+                loss_collector.append(loss_sc.item())
                 bar.update(1)
-                bar.set_postfix(loss=loss.item(), lr=optimizer.param_groups[0]['lr'])
+                bar.set_postfix(loss=loss_sc.item(), lr=optimizer.param_groups[0]['lr'])
         # 计算平均的loss
         loss_list.append(np.mean(loss_collector))
 
@@ -85,7 +106,7 @@ def train(args):
                 token_type_ids = token_type_ids.to(device)
                 # predict
                 with torch.no_grad():
-                    logits = model(input_ids, attention_mask, token_type_ids)
+                    logits = model(input_ids, attention_mask, token_type_ids).logits
                     predict = torch.argmax(logits, dim=1).cpu()
                 # evaluate
                 precision_collector.append(precision_score(label, predict))
@@ -128,5 +149,6 @@ if __name__ == '__main__':
     args.gpu_id = 1
     args.batch_size = 16
     args.epochs = 10
-    args.freeze = True
+    args.freeze = False
+    args.peft = True
     train(args)

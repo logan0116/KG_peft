@@ -53,5 +53,8 @@ def parameter_parser():
     # freeze set
     parser.add_argument('--freeze', help="Please give a value for freeze",
                         default=False, type=bool)
+    # peft set
+    parser.add_argument('--peft', help="Please give a value for peft",
+                        default=False, type=bool)
 
     return parser.parse_args()
