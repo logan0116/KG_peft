@@ -28,12 +28,17 @@ def train(args):
     model = MySequenceClassificationModel(model='bert-base-uncased', num_labels=2)
     model.to(device)
     logging.info('model load done!')
-    # 优化器
-    optimizer = optim.Adam(model.parameters(), lr=args.init_lr, weight_decay=args.weight_decay)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max',
-                                                     factor=args.lr_reduce_factor,
-                                                     patience=args.lr_schedule_patience,
-                                                     verbose=True)
+    # freeze
+    if args.freeze:
+        for param in model.bert.bert.parameters():
+            param.requires_grad = False
+        logging.info('freeze done!')
+
+    # optimizer
+    if args.freeze:
+        optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.init_lr)
+    else:
+        optimizer = optim.Adam(model.parameters(), lr=args.init_lr)
     logging.info('optimizer load done!')
 
     # 计算平均的loss
@@ -63,7 +68,6 @@ def train(args):
                 loss_collector.append(loss.item())
                 bar.update(1)
                 bar.set_postfix(loss=loss.item(), lr=optimizer.param_groups[0]['lr'])
-                scheduler.step(np.mean(loss_collector))
         # 计算平均的loss
         loss_list.append(np.mean(loss_collector))
 
@@ -99,8 +103,8 @@ def train(args):
         recall_list.append(np.mean(recall_collector))
         accuracy_list.append(np.mean(accuracy_collector))
         f1_list.append(np.mean(f1_collector))
-        # logging by tqdm
-        tqdm.write('epoch: {}, loss: {}, precision: {}, recall: {}, accuracy: {}, f1: {}'.format(
+        # logging
+        logging.info('epoch: {}, loss: {}, precision: {}, recall: {}, accuracy: {}, f1: {}'.format(
             epoch, loss_list[-1], precision_list[-1], recall_list[-1], accuracy_list[-1], f1_list[-1]))
 
         # model save
@@ -121,7 +125,8 @@ def train(args):
 if __name__ == '__main__':
     # 训练参数设置
     args = parameter_parser()
-    args.gpu_id = 0
+    args.gpu_id = 1
     args.batch_size = 16
-    args.epochs = 100
+    args.epochs = 10
+    args.freeze = True
     train(args)

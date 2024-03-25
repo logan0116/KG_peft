@@ -39,7 +39,7 @@ def parameter_parser():
     parser.add_argument('--weight_decay', help="Please give a value for weight_decay",
                         default=0.0005, type=float)
     parser.add_argument('--min_lr', help="Please give a value for min_lr",
-                        default=0.00001, type=float)
+                        default=0.00002, type=float)
     # data
     # parser.add_argument('--dataset', help="Please give a value for dataset name",
     #                     default='COLLAB', type=str)
@@ -50,5 +50,8 @@ def parameter_parser():
                         default=True, type=bool)
     parser.add_argument('--gpu_id', help="Please give a value for gpu_id",
                         default=0, type=int)
+    # freeze set
+    parser.add_argument('--freeze', help="Please give a value for freeze",
+                        default=False, type=bool)
 
     return parser.parse_args()
