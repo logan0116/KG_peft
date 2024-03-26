@@ -97,14 +97,15 @@ def train(args):
                 input_ids = input_ids.to(device)
                 attention_mask = attention_mask.to(device)
                 token_type_ids = token_type_ids.to(device)
-                label = label.to(device)
+                start_positions = start_positions.to(device)
+                end_positions = end_positions.to(device)
                 # loss
                 optimizer.zero_grad()
                 loss_sc = model(input_ids=input_ids,
                                 attention_mask=attention_mask,
                                 token_type_ids=token_type_ids,
                                 start_positions=start_positions,
-                                labels=label).loss
+                                end_positions=end_positions).loss
                 loss_sc.backward()
                 optimizer.step()
                 loss_collector.append(loss_sc.item())
@@ -128,22 +129,18 @@ def train(args):
                 # predict
                 with torch.no_grad():
                     outputs = model(input_ids=input_ids,
-                                   attention_mask=attention_mask,
-                                   token_type_ids=token_type_ids)
+                                    attention_mask=attention_mask,
+                                    token_type_ids=token_type_ids)
 
                     answer_start_index = outputs.start_logits.argmax().cpu()
                     answer_end_index = outputs.end_logits.argmax().cpu()
                 # evaluate
-
-
-
-
-
-
-                precision_collector.append(precision_score(label, predict))
-                recall_collector.append(recall_score(label, predict))
-                accuracy_collector.append(accuracy_score(label, predict))
-                f1_collector.append(f1_score(label, predict))
+                precision, recall, accuracy, f1 = metric4qa(answer_start_index, answer_end_index,
+                                                            start_positions, end_positions)
+                precision_collector.append(precision)
+                recall_collector.append(recall)
+                accuracy_collector.append(accuracy)
+                f1_collector.append(f1)
                 bar.update(1)
                 bar.set_postfix(precision=np.mean(precision_collector),
                                 recall=np.mean(recall_collector),
@@ -190,10 +187,10 @@ if __name__ == '__main__':
     train(args)
     # LoRA r=4
     args = parameter_parser()
-    args.gpu_id = 0
+    args.gpu_id = 1
     args.freeze = False
     args.peft = 'lora'
-    args.LoRA_r = 4
+    args.LoRA_r = 8
     train(args)
 
     # # LoRA r=16

@@ -28,7 +28,7 @@ def parameter_parser():
     parser.add_argument('--epochs', help="Please give a value for epochs",
                         default=5, type=int)
     parser.add_argument('--batch_size', help="Please give a value for batch_size",
-                        default=16, type=int)
+                        default=4, type=int)
     # optimizer
     parser.add_argument('--init_lr', help="Please give a value for init_lr",
                         default=0.0001, type=float)

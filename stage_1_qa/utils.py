@@ -7,6 +7,7 @@
 
 import torch
 import torch.utils.data as Data
+import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import precision_score, recall_score, accuracy_score, f1_score
@@ -138,6 +139,9 @@ def data_load(data_set="train"):
     token_type_ids_list = torch.load('data/' + data_set + '_token_type_ids_list.pth')
     start_positions_list = torch.load('data/' + data_set + '_start_positions_list.pth')
     end_positions_list = torch.load('data/' + data_set + '_end_positions_list.pth')
+    # dtype
+    start_positions_list = start_positions_list.long()
+    end_positions_list = end_positions_list.long()
 
     return MyDataSet(input_ids_list, attention_mask_list, token_type_ids_list,
                      start_positions_list, end_positions_list)
@@ -171,3 +175,51 @@ class MyDataSet(Data.Dataset):
 
 # data_process4qa(data_set="train")
 # data_process4qa(data_set="test")
+
+def metric4qa(pred_start_positions, pred_end_positions, start_positions, end_positions):
+    """
+    Precision, Recall, Accuracy, F1
+    :param pred_start_positions:
+    :param pred_end_positions:
+    :param start_positions:
+    :param end_positions:
+    :return:
+    """
+    precision_list = []
+    recall_list = []
+    accuracy_list = []
+    f1_list = []
+    # to list
+    pred_start_positions = pred_start_positions.tolist()
+    pred_end_positions = pred_end_positions.tolist()
+    start_positions = start_positions.tolist()
+    end_positions = end_positions.tolist()
+
+    for s_p, e_p, s_t, e_t in zip(pred_start_positions, pred_end_positions, start_positions, end_positions):
+        range_1 = s_p - e_t
+        range_2 = e_p - s_t
+        if range_1 * range_2 <= 0:
+            # 异号
+            precision_list.append(0)
+            recall_list.append(0)
+            accuracy_list.append(0)
+            f1_list.append(0)
+        else:
+            # 同号
+            range_1 = abs(range_1)
+            range_2 = abs(range_2)
+            range_small = min(range_1, range_2)
+            range_large = max(range_1, range_2)
+            precision = range_small / (e_p - s_p)
+            recall = range_small / (e_t - s_t)
+            accuracy = range_small / range_large
+            f1 = 2 * precision * recall / (precision + recall)
+            # add
+            precision_list.append(precision)
+            recall_list.append(recall)
+            accuracy_list.append(accuracy)
+            f1_list.append(f1)
+
+    # return mean
+    return np.mean(precision_list), np.mean(recall_list), np.mean(accuracy_list), np.mean(f1_list)
+
