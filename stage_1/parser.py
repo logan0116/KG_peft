@@ -56,5 +56,7 @@ def parameter_parser():
     # peft set
     parser.add_argument('--peft', help="Please give a value for peft",
                         default=False, type=bool)
+    parser.add_argument('--LoRA_r', help="Please give a value for LoRA_r",
+                        default=8, type=int)
 
     return parser.parse_args()

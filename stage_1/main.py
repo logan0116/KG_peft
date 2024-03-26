@@ -45,12 +45,19 @@ def train(args):
 
     # peft
     if args.peft:
-        config = LoraConfig(task_type=TaskType.SEQ_CLS,
+        config = LoraConfig(r=8,
+                            task_type=TaskType.SEQ_CLS,
                             lora_dropout=0.01)
 
         model = get_peft_model(model, config)
         logging.info('peft done!')
         model.print_trainable_parameters()
+
+    # print model & model parameters requires_grad == True
+    print(model)
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(name)
 
     # optimizer
     if args.freeze:
@@ -106,7 +113,9 @@ def train(args):
                 token_type_ids = token_type_ids.to(device)
                 # predict
                 with torch.no_grad():
-                    logits = model(input_ids, attention_mask, token_type_ids).logits
+                    logits = model(input_ids=input_ids,
+                                   attention_mask=attention_mask,
+                                   token_type_ids=token_type_ids).logits
                     predict = torch.argmax(logits, dim=1).cpu()
                 # evaluate
                 precision_collector.append(precision_score(label, predict))
@@ -146,9 +155,4 @@ def train(args):
 if __name__ == '__main__':
     # 训练参数设置
     args = parameter_parser()
-    args.gpu_id = 1
-    args.batch_size = 16
-    args.epochs = 10
-    args.freeze = False
-    args.peft = True
     train(args)
