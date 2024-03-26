@@ -8,11 +8,11 @@ import numpy as np
 from transformers import BertTokenizer, BertForSequenceClassification
 from peft import LoraConfig, get_peft_model, TaskType
 
-from model import *
 from utils import *
 from parser import parameter_parser
 
 import logging
+import time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,20 +44,30 @@ def train(args):
         logging.info('freeze done!')
 
     # peft
-    if args.peft:
-        config = LoraConfig(r=8,
-                            task_type=TaskType.SEQ_CLS,
-                            lora_dropout=0.01)
+    if args.peft is not None:
+        if args.peft == "lora":
+            config = LoraConfig(r=args.LoRA_r,
+                                task_type=TaskType.SEQ_CLS,
+                                lora_dropout=0.01)
 
-        model = get_peft_model(model, config)
-        logging.info('peft done!')
-        model.print_trainable_parameters()
+            model = get_peft_model(model, config)
+            logging.info('peft done!')
+            model.print_trainable_parameters()
+        elif args.peft == "dora":
+            config = LoraConfig(r=args.LoRA_r,
+                                task_type=TaskType.SEQ_CLS,
+                                lora_dropout=0.01,
+                                use_dora=True)
 
-    # print model & model parameters requires_grad == True
-    print(model)
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            print(name)
+            model = get_peft_model(model, config)
+            logging.info('peft done!')
+            model.print_trainable_parameters()
+
+    # # print model & model parameters requires_grad == True
+    # print(model)
+    # for name, param in model.named_parameters():
+    #     if param.requires_grad:
+    #         print(name)
 
     # optimizer
     if args.freeze:
@@ -74,6 +84,10 @@ def train(args):
     f1_list = []
     best_f1 = 0
     logging.info('start training!')
+    # log all config
+    logging.info('config: batch_size: {}, epochs: {}, init_lr: {}, freeze: {}, peft: {}, LoRA_r: {}'.format(
+        args.batch_size, args.epochs, args.init_lr, args.freeze, args.peft, args.LoRA_r))
+
     for epoch in range(args.epochs):
         # train
         model.train()
@@ -140,8 +154,9 @@ def train(args):
         # model save
         if f1_list[-1] > best_f1:
             best_f1 = f1_list[-1]
-            # save model(add epoch)
-            torch.save(model.state_dict(), 'model/model_epoch_{}.pth'.format(epoch))
+            # save model(add epoch & time)
+            local_time = time.strftime('%Y_%m_%d-%H_%M_%S', time.localtime(time.time()))
+            torch.save(model.state_dict(), 'model/model_epoch_{}_{}.pth'.format(epoch, local_time))
 
         # early stop
         if epoch > 10:
@@ -153,6 +168,37 @@ def train(args):
 
 
 if __name__ == '__main__':
-    # 训练参数设置
+    # # full train
+    # args = parameter_parser()
+    # args.gpu_id = 0
+    # args.freeze = False
+    # args.peft = False
+    # train(args)
+    # # freeze
+    # args = parameter_parser()
+    # args.gpu_id = 0
+    # args.freeze = True
+    # args.peft = False
+    # train(args)
+    # LoRA r=4
     args = parameter_parser()
+    args.gpu_id = 0
+    args.freeze = False
+    args.peft = 'dora'
+    args.LoRA_r = 8
     train(args)
+
+    # # LoRA r=16
+    # args = parameter_parser()
+    # args.gpu_id = 1
+    # args.freeze = False
+    # args.peft = 'lora'
+    # args.LoRA_r = 16
+    # train(args)
+    # # LoRA r=8
+    # args = parameter_parser()
+    # args.gpu_id = 1
+    # args.freeze = False
+    # args.peft = 'lora'
+    # args.LoRA_r = 8
+    # train(args)
