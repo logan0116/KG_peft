@@ -22,8 +22,8 @@ def train(args):
     device = torch.device('cuda:{}'.format(args.gpu_id) if torch.cuda.is_available() and args.use_gpu else 'cpu')
     logging.info('device: {}'.format(device))
     # data
-    dataset_train = data_load(data_set='train')
-    dataset_test = data_load(data_set='test')
+    dataset_train = data_load(data_set='train', test_mode=args.test_mode)
+    dataset_test = data_load(data_set='test', test_mode=args.test_mode)
     dataloader_train = Data.DataLoader(dataset_train, args.batch_size, True)
     dataloader_test = Data.DataLoader(dataset_test, args.batch_size, True)
     logging.info('data load done!')
@@ -46,7 +46,7 @@ def train(args):
     if args.peft is not None:
         if args.peft == "lora":
             config = LoraConfig(r=args.LoRA_r,
-                                task_type=TaskType.SEQ_CLS,
+                                task_type=TaskType.QUESTION_ANS,
                                 lora_dropout=0.01)
 
             model = get_peft_model(model, config)
@@ -54,7 +54,7 @@ def train(args):
             model.print_trainable_parameters()
         elif args.peft == "dora":
             config = LoraConfig(r=args.LoRA_r,
-                                task_type=TaskType.SEQ_CLS,
+                                task_type=TaskType.QUESTION_ANS,
                                 lora_dropout=0.01,
                                 use_dora=True)
 
@@ -132,8 +132,8 @@ def train(args):
                                     attention_mask=attention_mask,
                                     token_type_ids=token_type_ids)
 
-                    answer_start_index = outputs.start_logits.argmax().cpu()
-                    answer_end_index = outputs.end_logits.argmax().cpu()
+                    answer_start_index = outputs.start_logits.argmax(dim=1).cpu()
+                    answer_end_index = outputs.end_logits.argmax(dim=1).cpu()
                 # evaluate
                 precision, recall, accuracy, f1 = metric4qa(answer_start_index, answer_end_index,
                                                             start_positions, end_positions)
@@ -173,26 +173,26 @@ def train(args):
 
 
 if __name__ == '__main__':
-    # full train
-    args = parameter_parser()
-    args.gpu_id = 0
-    args.freeze = False
-    args.peft = False
-    train(args)
-    # freeze
-    args = parameter_parser()
-    args.gpu_id = 0
-    args.freeze = True
-    args.peft = False
-    train(args)
+    # # full train
+    # args = parameter_parser()
+    # # args.test_mode = True
+    # args.gpu_id = 0
+    # args.freeze = False
+    # args.peft = False
+    # train(args)
+    # # freeze
+    # args = parameter_parser()
+    # args.gpu_id = 0
+    # args.freeze = True
+    # args.peft = False
+    # train(args)
     # LoRA r=4
     args = parameter_parser()
     args.gpu_id = 1
     args.freeze = False
     args.peft = 'lora'
-    args.LoRA_r = 8
+    args.LoRA_r = 4
     train(args)
-
     # # LoRA r=16
     # args = parameter_parser()
     # args.gpu_id = 1

@@ -31,7 +31,7 @@ def parameter_parser():
                         default=4, type=int)
     # optimizer
     parser.add_argument('--init_lr', help="Please give a value for init_lr",
-                        default=0.0001, type=float)
+                        default=0.00002, type=float)
     parser.add_argument('--lr_reduce_factor', help="Please give a value for lr_reduce_factor",
                         default=0.5, type=float)
     parser.add_argument('--lr_schedule_patience', help="Please give a value for lr_schedule_patience",
@@ -45,6 +45,8 @@ def parameter_parser():
     #                     default='COLLAB', type=str)
     parser.add_argument('--data_path', help="Please give a value for data_path",
                         default='data/COLLAB', type=str)
+    parser.add_argument('--test_mode', help="Please give a value for test_mode",
+                        default=False, type=bool)
     # gpu
     parser.add_argument('--use_gpu', help="Please give a value for use_gpu",
                         default=True, type=bool)

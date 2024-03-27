@@ -130,7 +130,7 @@ def data_process4qa(data_set="train", tokenizer_model='bert-base-cased'):
     print(data_set + " data process done!")
 
 
-def data_load(data_set="train"):
+def data_load(data_set="train", test_mode=False):
     """
     data load
     """
@@ -142,7 +142,9 @@ def data_load(data_set="train"):
     # dtype
     start_positions_list = start_positions_list.long()
     end_positions_list = end_positions_list.long()
-
+    if test_mode:
+        return MyDataSet(input_ids_list[:20], attention_mask_list[:20], token_type_ids_list[:20],
+                         start_positions_list[:20], end_positions_list[:20])
     return MyDataSet(input_ids_list, attention_mask_list, token_type_ids_list,
                      start_positions_list, end_positions_list)
 
@@ -196,30 +198,32 @@ def metric4qa(pred_start_positions, pred_end_positions, start_positions, end_pos
     end_positions = end_positions.tolist()
 
     for s_p, e_p, s_t, e_t in zip(pred_start_positions, pred_end_positions, start_positions, end_positions):
-        range_1 = s_p - e_t
-        range_2 = e_p - s_t
-        if range_1 * range_2 <= 0:
-            # 异号
-            precision_list.append(0)
-            recall_list.append(0)
-            accuracy_list.append(0)
-            f1_list.append(0)
-        else:
-            # 同号
-            range_1 = abs(range_1)
-            range_2 = abs(range_2)
-            range_small = min(range_1, range_2)
-            range_large = max(range_1, range_2)
-            precision = range_small / (e_p - s_p)
-            recall = range_small / (e_t - s_t)
-            accuracy = range_small / range_large
+        # e +1
+        e_p += 1
+        e_t += 1
+
+        if (s_t <= s_p < e_t or s_t < e_p <= e_t) and (s_p < e_p) and (s_t < e_t):
+            range_1 = e_t - s_p
+            range_2 = e_p - s_t
+            # 交集
+            intersection = min(range_1, range_2)
+            # 并集
+            union = max(range_1, range_2)
+            precision = intersection / (e_p - s_p)
+            recall = intersection / (e_t - s_t)
+            accuracy = intersection / union
             f1 = 2 * precision * recall / (precision + recall)
             # add
             precision_list.append(precision)
             recall_list.append(recall)
             accuracy_list.append(accuracy)
             f1_list.append(f1)
+        else:
+            # 无交集
+            precision_list.append(0)
+            recall_list.append(0)
+            accuracy_list.append(0)
+            f1_list.append(0)
 
     # return mean
     return np.mean(precision_list), np.mean(recall_list), np.mean(accuracy_list), np.mean(f1_list)
-
