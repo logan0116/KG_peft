@@ -141,20 +141,20 @@ if __name__ == '__main__':
     # args.peft = False
     # train(args)
 
-    # LoRA r=16
-    args = parameter_parser()
-    args.gpu_id = 0
-    args.freeze = False
-    args.if_lora = True
-    args.LoRA_r = 16
-    train(args)
-    # LoRA r=8
-    args = parameter_parser()
-    args.gpu_id = 0
-    args.freeze = False
-    args.if_lora = True
-    args.LoRA_r = 8
-    train(args)
+    # # LoRA r=16
+    # args = parameter_parser()
+    # args.gpu_id = 0
+    # args.freeze = False
+    # args.if_lora = True
+    # args.LoRA_r = 16
+    # train(args)
+    # # LoRA r=8
+    # args = parameter_parser()
+    # args.gpu_id = 0
+    # args.freeze = False
+    # args.if_lora = True
+    # args.LoRA_r = 8
+    # train(args)
     # LoRA r=4
     args = parameter_parser()
     args.gpu_id = 0

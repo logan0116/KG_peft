@@ -57,8 +57,8 @@ result for all
 针对任务：QA
 QA的两种形式：
 
-1. classical version: question, context, start_pos, end_pos
-2. LLM version: question, context, answer
+1. 抽取式：question, context, start_pos, end_pos
+2. 生成式：question, context, answer
 
 ## stage_1_ner
 
@@ -70,6 +70,9 @@ result at epoch 0
 |------------------------|--------|
 | bert4ner               | 0.745  |
 | bert4ner (freeze bert) | 0.0428 |
+| lora (r = 16)          | 0.0671 |
+| lora (r = 8)           | 0.0874 |
+| lora (r = 4)           | 0.0728 |
 
 result at epoch 30
 
@@ -77,3 +80,6 @@ result at epoch 30
 |------------------------|-------|------------|
 | bert4ner               | 0.795 | 6          |
 | bert4ner (freeze bert) | 0.531 | 25         |
+| lora (r = 16)          | 0.777 | 27         |
+| lora (r = 8)           | 0.771 | 26         |
+| lora (r = 4)           | 0.776 | 28         |
