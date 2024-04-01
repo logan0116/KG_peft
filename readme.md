@@ -52,12 +52,28 @@ result for all
 | lora (r = 4)          | 0.596    | 0.63  | 0.666     | 0.67   | 4          |
 | dora (r = 8)          | 0.63     | 0.634 | 0.67      | 0.675  | 4          |
 
-
 组织我们自己的框架
 
 针对任务：QA
 QA的两种形式：
-    1. classical version: question, context, start_pos, end_pos
-    2. LLM version: question, context, answer
 
+1. classical version: question, context, start_pos, end_pos
+2. LLM version: question, context, answer
 
+## stage_1_ner
+
+### result table
+
+result at epoch 0
+
+| model                  | f1     |
+|------------------------|--------|
+| bert4ner               | 0.745  |
+| bert4ner (freeze bert) | 0.0428 |
+
+result at epoch 30
+
+| model                  | f1    | best epoch |
+|------------------------|-------|------------|
+| bert4ner               | 0.795 | 6          |
+| bert4ner (freeze bert) | 0.531 | 25         |

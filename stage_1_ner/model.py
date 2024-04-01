@@ -11,6 +11,8 @@ import torch.nn as nn
 import numpy as np
 from transformers import BertModel, BertConfig
 
+from peft import LoraConfig, get_peft_model, TaskType
+
 
 class GlobalPointer(nn.Module):
     def __init__(self, hidden_size, num_heads, head_size, device, if_rope):
@@ -145,10 +147,18 @@ class EfficientGlobalPointer(nn.Module):
 
 
 class MyNER(nn.Module):
-    def __init__(self, bert_model_path, ner_num_heads, ner_head_size, device, if_rope=False, if_efficientnet=False):
+    def __init__(self, bert_model_path, ner_num_heads, ner_head_size, device,
+                 if_lora=False, lora_r=1,
+                 if_rope=False, if_efficientnet=False):
         super().__init__()
         self.config = BertConfig.from_pretrained(bert_model_path)
         self.bert = BertModel.from_pretrained(bert_model_path)
+        if if_lora:
+            lora_config = LoraConfig(r=lora_r,
+                                     task_type=TaskType.FEATURE_EXTRACTION,
+                                     lora_dropout=0.01)
+            self.bert = get_peft_model(self.bert, lora_config)
+
         if if_efficientnet:
             self.ner_score = EfficientGlobalPointer(hidden_size=self.config.hidden_size,
                                                     num_heads=ner_num_heads,

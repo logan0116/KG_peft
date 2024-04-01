@@ -31,7 +31,7 @@ def parameter_parser():
                         default=32, type=int)
     # optimizer
     parser.add_argument('--init_lr', help="Please give a value for init_lr",
-                        default=0.0001, type=float)
+                        default=0.00002, type=float)
     parser.add_argument('--lr_reduce_factor', help="Please give a value for lr_reduce_factor",
                         default=0.5, type=float)
     parser.add_argument('--lr_schedule_patience', help="Please give a value for lr_schedule_patience",
@@ -58,5 +58,7 @@ def parameter_parser():
                         default=False, type=bool)
     parser.add_argument('--LoRA_r', help="Please give a value for LoRA_r",
                         default=8, type=int)
+    parser.add_argument('--if_lora', help="Please give a value for if_lora",
+                        default=False, type=bool)
 
     return parser.parse_args()

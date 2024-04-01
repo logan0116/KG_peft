@@ -3,10 +3,6 @@ train a SequenceClassification model by using the IMDb dataset
 """
 
 import torch.optim as optim
-import numpy as np
-
-from transformers import BertTokenizer, BertForSequenceClassification
-from peft import LoraConfig, get_peft_model, TaskType
 
 from utils import *
 from model import *
@@ -32,6 +28,8 @@ def train(args):
     model = MyNER(bert_model_path='hfl/chinese-roberta-wwm-ext-large',
                   ner_num_heads=10,
                   ner_head_size=64,
+                  if_lora=args.if_lora,
+                  lora_r=args.LoRA_r,
                   device=device,
                   if_rope=True)
     model.to(device)
@@ -46,32 +44,10 @@ def train(args):
         for param in model.bert.parameters():
             param.requires_grad = False
         logging.info('freeze done!')
-    #
-    # # peft
-    # if args.peft is not None:
-    #     if args.peft == "lora":
-    #         config = LoraConfig(r=args.LoRA_r,
-    #                             task_type=TaskType.SEQ_CLS,
-    #                             lora_dropout=0.01)
-    #
-    #         model = get_peft_model(model, config)
-    #         logging.info('peft done!')
-    #         model.print_trainable_parameters()
-    #     elif args.peft == "dora":
-    #         config = LoraConfig(r=args.LoRA_r,
-    #                             task_type=TaskType.SEQ_CLS,
-    #                             lora_dropout=0.01,
-    #                             use_dora=True)
-    #
-    #         model = get_peft_model(model, config)
-    #         logging.info('peft done!')
-    #         model.print_trainable_parameters()
 
-    # # print model & model parameters requires_grad == True
-    # print(model)
-    # for name, param in model.named_parameters():
-    #     if param.requires_grad:
-    #         print(name)
+    # peft
+    if args.if_lora:
+        model.bert.print_trainable_parameters()
 
     # optimizer
     if args.freeze:
@@ -82,9 +58,6 @@ def train(args):
 
     # 计算平均的loss
     loss_list = []
-    precision_list = []
-    recall_list = []
-    accuracy_list = []
     f1_list = []
     best_f1 = 0
     logging.info('start training!')
@@ -123,6 +96,7 @@ def train(args):
                 # to device
                 input_ids = input_ids.to(device)
                 attention_mask = attention_mask.to(device)
+                label = label.to(device)
                 # predict
                 with torch.no_grad():
                     score = model(input_ids=input_ids, attention_mask=attention_mask)
@@ -154,37 +128,37 @@ def train(args):
 
 
 if __name__ == '__main__':
-    # full train
-    args = parameter_parser()
-    args.gpu_id = 0
-    args.freeze = False
-    args.peft = False
-    train(args)
-    # freeze
-    args = parameter_parser()
-    args.gpu_id = 0
-    args.freeze = True
-    args.peft = False
-    train(args)
-    # LoRA r=4
+    # # full train
     # args = parameter_parser()
     # args.gpu_id = 0
     # args.freeze = False
-    # args.peft = 'dora'
-    # args.LoRA_r = 8
+    # args.peft = False
+    # train(args)
+    # # freeze
+    # args = parameter_parser()
+    # args.gpu_id = 0
+    # args.freeze = True
+    # args.peft = False
     # train(args)
 
-    # # LoRA r=16
-    # args = parameter_parser()
-    # args.gpu_id = 1
-    # args.freeze = False
-    # args.peft = 'lora'
-    # args.LoRA_r = 16
-    # train(args)
-    # # LoRA r=8
-    # args = parameter_parser()
-    # args.gpu_id = 1
-    # args.freeze = False
-    # args.peft = 'lora'
-    # args.LoRA_r = 8
-    # train(args)
+    # LoRA r=16
+    args = parameter_parser()
+    args.gpu_id = 0
+    args.freeze = False
+    args.if_lora = True
+    args.LoRA_r = 16
+    train(args)
+    # LoRA r=8
+    args = parameter_parser()
+    args.gpu_id = 0
+    args.freeze = False
+    args.if_lora = True
+    args.LoRA_r = 8
+    train(args)
+    # LoRA r=4
+    args = parameter_parser()
+    args.gpu_id = 0
+    args.freeze = False
+    args.if_lora = True
+    args.LoRA_r = 4
+    train(args)
