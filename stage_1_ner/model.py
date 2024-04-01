@@ -145,10 +145,10 @@ class EfficientGlobalPointer(nn.Module):
 
 
 class MyNER(nn.Module):
-    def __init__(self, ner_num_heads, ner_head_size, device, if_rope=False, if_efficientnet=False):
+    def __init__(self, bert_model_path, ner_num_heads, ner_head_size, device, if_rope=False, if_efficientnet=False):
         super().__init__()
-        self.config = BertConfig.from_pretrained('hfl/chinese-roberta-wwm-ext')
-        self.bert = BertModel.from_pretrained('hfl/chinese-roberta-wwm-ext')
+        self.config = BertConfig.from_pretrained(bert_model_path)
+        self.bert = BertModel.from_pretrained(bert_model_path)
         if if_efficientnet:
             self.ner_score = EfficientGlobalPointer(hidden_size=self.config.hidden_size,
                                                     num_heads=ner_num_heads,

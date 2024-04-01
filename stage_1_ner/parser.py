@@ -26,7 +26,7 @@ def parameter_parser():
     #                     default='mean', type=str)
     # train
     parser.add_argument('--epochs', help="Please give a value for epochs",
-                        default=5, type=int)
+                        default=30, type=int)
     parser.add_argument('--batch_size', help="Please give a value for batch_size",
                         default=32, type=int)
     # optimizer

@@ -24,12 +24,13 @@ def train(args):
     logging.info('device: {}'.format(device))
     # data
     dataset_train = data_load(data_set='train')
-    dataset_test = data_load(data_set='test')
+    dataset_test = data_load(data_set='dev')
     dataloader_train = Data.DataLoader(dataset_train, args.batch_size, True)
     dataloader_test = Data.DataLoader(dataset_test, args.batch_size, True)
     logging.info('data load done!')
     # model
-    model = MyNER(ner_num_heads=10,
+    model = MyNER(bert_model_path='hfl/chinese-roberta-wwm-ext-large',
+                  ner_num_heads=10,
                   ner_head_size=64,
                   device=device,
                   if_rope=True)

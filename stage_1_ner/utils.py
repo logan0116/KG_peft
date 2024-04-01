@@ -87,6 +87,20 @@ def data_process(data_set="train", tokenizer_model='hfl/chinese-roberta-wwm-ext-
     attention_mask_list = []
     label_list = []
 
+    # length check
+    # length_list = []
+    # for d in data:
+    #     # text
+    #     inputs = tokenizer(d['text'])
+    #     input_ids = inputs['input_ids']
+    #     length_list.append(len(input_ids))
+    #
+    # # count
+    # length_count = {}
+    # for l in [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 300]:
+    #     length_count[l] = len([i for i in length_list if i <= l])
+    # print(length_count)
+
     for d in tqdm(data):
         # text
         inputs = tokenizer(d['text'], max_length=max_length, truncation=True, padding='max_length')
@@ -106,6 +120,9 @@ def data_process(data_set="train", tokenizer_model='hfl/chinese-roberta-wwm-ext-
         label_list.append(label)
     # trans to np
     label_list = np.array(label_list)
+    # trans to tensor
+    input_ids_list = torch.tensor(input_ids_list, dtype=torch.int)
+    attention_mask_list = torch.tensor(attention_mask_list, dtype=torch.int)
     label_list = torch.tensor(label_list, dtype=torch.int)
 
     # save
@@ -146,3 +163,8 @@ class MyDataSet(Data.Dataset):
 
     def __getitem__(self, idx):
         return self.input_ids_list[idx], self.attention_mask[idx], self.label[idx]
+
+
+if __name__ == '__main__':
+    data_process(data_set="train")
+    data_process(data_set="dev")
