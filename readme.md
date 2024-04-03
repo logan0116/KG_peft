@@ -1,5 +1,7 @@
 # KG peft
 
+# stage_1
+
 ## stage_1_SC
 
 bert full fine-tuning vs peft
@@ -83,3 +85,15 @@ result at epoch 30
 | lora (r = 16)          | 0.777 | 27         |
 | lora (r = 8)           | 0.771 | 26         |
 | lora (r = 4)           | 0.776 | 28         |
+
+
+
+# stage_2
+
+这一阶段的基础是DBLP知识图谱
+
+节点包括：作者、论文、会议、领域、机构
+连接包括：作者-论文、论文-会议、论文-领域、作者-机构、论文-(cite)-论文
+属性包括：
+    论文：id, title, abstract, year, keywords, doi
+    作者：id, name
