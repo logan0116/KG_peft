@@ -22,7 +22,7 @@ from collections import defaultdict
     'url': ['http://dx.doi.org/10.1007/3-540-44810-1_29'], 
     'abstract': '', 
     'authors': [{'id': '5440fb25dabfae805a716dd7', 'name': 'George Danezis', 'org': ''}], 
-    'doc_type': 'Conference', 
+    'doc_type': 'Conference',   
     'fos': [{'name': 'Escrow', 'w': 0.66847}, {'name': 'Internet privacy', 'w': 0.4402}, {'name': 'Computer security', 'w': 0.4398}, {'name': 'Computer science', 'w': 0.40649}], 
     'indexed_abstract': [], 
     'v12_id': 2170999327, 
@@ -94,8 +94,6 @@ def get_node_author():
             authors = paper['authors']
             for author in authors:
                 author_id = author['id']
-                if author_id in author_id2info:
-                    continue
                 name = author['name']
                 org_name = author['org']
                 author_id2info[author_id] = {'name': name}
@@ -128,16 +126,23 @@ def get_node_venue_fos():
         with open(f'{dblp_file_path}/{file}', 'r', encoding='utf-8') as f:
             data = json.load(f)
         for paper in data:
-            venue = paper['venue']['raw']
-            if venue not in venue_name2index:
-                venue_name2index[venue] = venue_index
-                venue_index += 1
-            fos_list = paper['fos']
-            for fos in fos_list:
-                fos_name = fos['name']
-                if fos_name not in fos_name2index:
-                    fos_name2index[fos_name] = fos_index
-                    fos_index += 1
+            try:
+                venue = paper['venue']['raw']
+                if venue not in venue_name2index:
+                    venue_name2index[venue] = venue_index
+                    venue_index += 1
+            except KeyError:
+                pass
+
+            try:
+                fos_list = paper['fos']
+                for fos in fos_list:
+                    fos_name = fos['name']
+                    if fos_name not in fos_name2index:
+                        fos_name2index[fos_name] = fos_index
+                        fos_index += 1
+            except KeyError:
+                pass
 
     # save
     with open('graph/node/venue_name2index.json', 'w', encoding='utf-8') as f:
@@ -197,15 +202,22 @@ def get_link_paper2venue_fos():
             data = json.load(f)
         for paper in data:
             paper_id = paper['id']
-            venue = paper['venue']['raw']
-            fos_list = paper['fos']
 
             # add
-            venue2paper_id[venue_name2index[venue]].append(paper_id)
-            for fos in fos_list:
-                fos_name = fos['name']
-                fos_w = fos['w']
-                fos2paper_id[fos_name2index[fos_name]].append({'paper_id': paper_id, 'w': fos_w})
+            try:
+                venue = paper['venue']['raw']
+                venue2paper_id[venue_name2index[venue]].append(paper_id)
+            except KeyError:
+                pass
+
+            try:
+                fos_list = paper['fos']
+                for fos in fos_list:
+                    fos_name = fos['name']
+                    fos_w = fos['w']
+                    fos2paper_id[fos_name2index[fos_name]].append({'paper_id': paper_id, 'w': fos_w})
+            except KeyError:
+                pass
 
     # save
     with open('graph/link/venue2paper_id.json', 'w', encoding='utf-8') as f:
@@ -238,19 +250,49 @@ def get_link_author2org():
             for author in authors:
                 author_id = author['id']
                 org_name = author['org']
-                author_id2org_name[author_id][org_name2index[org_name]] = year
+                if org_name != '':
+                    if org_name not in author_id2org_name[author_id]:
+                        author_id2org_name[author_id][org_name2index[org_name]] = [year]
+                    else:
+                        author_id2org_name[author_id][org_name2index[org_name]].append(year)
 
     # save
     with open('graph/link/author_id2org_name.json', 'w', encoding='utf-8') as f:
         json.dump(author_id2org_name, f, ensure_ascii=False, indent=4)
 
 
+def get_link_paper2paper():
+    """
+    从dblp_v14.json中提取paper和paper的关系，包括：
+        paper -> paper
+    :return:
+    """
+    dblp_file_path = 'data'
+    dblp_file_list = os.listdir(dblp_file_path)
+
+    paper_id2reference = defaultdict(list)
+
+    for file in tqdm(dblp_file_list):
+        with open(f'{dblp_file_path}/{file}', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        for paper in data:
+            paper_id = paper['id']
+            if 'references' in paper:
+                references = paper['references']
+                for reference in references:
+                    paper_id2reference[paper_id].append(reference)
+
+    # save
+    with open('graph/link/paper_id2reference.json', 'w', encoding='utf-8') as f:
+        json.dump(paper_id2reference, f, ensure_ascii=False, indent=4)
+
+
 if __name__ == '__main__':
     # data_cut()
     # get_node_paper()
     # get_node_author()
-
-    get_node_venue_fos()
-    get_link_author2paper()
-    get_link_paper2venue_fos()
-    get_link_author2org()
+    # get_node_venue_fos()
+    # get_link_author2paper()
+    # get_link_paper2venue_fos()
+    # get_link_author2org()
+    get_link_paper2paper()
