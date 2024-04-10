@@ -94,6 +94,8 @@ def get_node_author():
             authors = paper['authors']
             for author in authors:
                 author_id = author['id']
+                if author_id == '':
+                    continue
                 name = author['name']
                 org_name = author['org']
                 author_id2info[author_id] = {'name': name}
@@ -290,9 +292,9 @@ def get_link_paper2paper():
 if __name__ == '__main__':
     # data_cut()
     # get_node_paper()
-    # get_node_author()
+    get_node_author()
     # get_node_venue_fos()
-    # get_link_author2paper()
+    get_link_author2paper()
     # get_link_paper2venue_fos()
-    # get_link_author2org()
-    get_link_paper2paper()
+    get_link_author2org()
+    # get_link_paper2paper()
