@@ -16,3 +16,6 @@ RUN pip install packaging -i https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip install flash-attn --no-build-isolation -i https://pypi.tuna.tsinghua.edu.cn/simple
 # add sklearn
 RUN pip install scikit-learn -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install tensor_parallel
+# gptq
+RUN pip install auto-gptq --no-build-isolation
