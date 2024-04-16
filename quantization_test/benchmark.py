@@ -11,9 +11,19 @@ import pandas as pd
 import torch
 import transformers
 from datasets import load_dataset
-from transformers import LlamaForCausalLM, LlamaTokenizer, AutoTokenizer, AutoModel, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM
 import tensor_parallel as tp
+from auto_gptq import AutoGPTQForCausalLM
+from awq import AutoAWQForCausalLM
 import accelerate
+
+# logging
+import logging
+
+# logging config
+logging.basicConfig(
+    format="Logan233: %(asctime)s %(levelname)s [%(name)s] %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 TASKS = [
     'abstract_algebra',
@@ -160,11 +170,21 @@ def load(ckpt_dir, model_type):
     en:Load the model
     zh:加载模型
     """
-    n_gpus = torch.cuda.device_count()
-    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-7B-Chat")
-    model = AutoModelForCausalLM.from_pretrained(ckpt_dir,
-                                                 torch_dtype=torch.float16,
-                                                 trust_remote_code=True)
+    # Setting `pad_token_id` to `eos_token_id`:151645 for open-end generation.
+    # A decoder-only architecture is being used, but right-padding was detected!
+    # For correct generation results, please set `padding_side='left'` when initializing the tokenizer.
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-7B-Chat", padding_side="left")
+
+    if model_type == 'gptq':
+        model = AutoGPTQForCausalLM.from_quantized(ckpt_dir)
+        logging.info("GPTQ Model loaded from %s" % ckpt_dir)
+    elif model_type == 'awq':
+        model = AutoAWQForCausalLM.from_pretrained(ckpt_dir)
+        logging.info("AWQ Model loaded from %s" % ckpt_dir)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(ckpt_dir,
+                                                     torch_dtype=torch.float16,
+                                                     trust_remote_code=True)
     # cuda
     model = model.to('cuda')
     model.eval()
@@ -186,11 +206,11 @@ def batch_split(prompts, batch_num):
 
 
 def batch_infer(model, tokenizer, prompts):
-    batch_size = 8
+    batch_size = 2
     answers = []
     for batch_input in tqdm(batch_split(prompts, batch_size)):
         encode_inputs = prepare_input(tokenizer, batch_input)
-        outputs = model.generate(**encode_inputs, max_new_tokens=1)
+        outputs = model.generate(**encode_inputs, max_new_tokens=1, pad_token_id=tokenizer.eos_token_id)
         answers.extend(tokenizer.batch_decode(outputs, skip_special_tokens=True))
     answers = [answer[-1] for answer in answers]
     return answers
