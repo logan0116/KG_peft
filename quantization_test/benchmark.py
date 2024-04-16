@@ -16,6 +16,7 @@ import tensor_parallel as tp
 from auto_gptq import AutoGPTQForCausalLM
 from awq import AutoAWQForCausalLM
 import accelerate
+import subprocess
 
 # logging
 import logging
@@ -181,6 +182,8 @@ def load(ckpt_dir, model_type):
     elif model_type == 'awq':
         model = AutoAWQForCausalLM.from_pretrained(ckpt_dir)
         logging.info("AWQ Model loaded from %s" % ckpt_dir)
+    elif model_type == 'gguf':
+        return None, tokenizer
     else:
         model = AutoModelForCausalLM.from_pretrained(ckpt_dir,
                                                      torch_dtype=torch.float16,
@@ -205,13 +208,37 @@ def batch_split(prompts, batch_num):
     return batch_prompts
 
 
-def batch_infer(model, tokenizer, prompts):
-    batch_size = 2
+def batch_infer(model, tokenizer, prompts, model_type):
+    """
+    en:Batch inference
+    zh:批量推理
+    :param model:
+    :param tokenizer:
+    :param prompts:
+    :param model_type:
+    """
+
+    batch_size = 1
+    if model_type == 'gguf':
+        batch_size = 1
     answers = []
     for batch_input in tqdm(batch_split(prompts, batch_size)):
-        encode_inputs = prepare_input(tokenizer, batch_input)
-        outputs = model.generate(**encode_inputs, max_new_tokens=1, pad_token_id=tokenizer.eos_token_id)
-        answers.extend(tokenizer.batch_decode(outputs, skip_special_tokens=True))
+        if model_type == 'gguf':
+            inputs = batch_input[0]
+            # write to file
+            with open('input.txt', 'w') as f:
+                f.write(inputs)
+            # run model
+            cmd = '/llama.cpp/build/bin/main -m {} -i input.txt -o output.txt'.format(model)
+            subprocess.run(cmd, shell=True)
+            # read from file
+            with open('output.txt', 'r') as f:
+                outputs = f.read()
+            answers.append(outputs)
+        else:
+            encode_inputs = prepare_input(tokenizer, batch_input)
+            outputs = model.generate(**encode_inputs, max_new_tokens=1, pad_token_id=tokenizer.eos_token_id)
+            answers.extend(tokenizer.batch_decode(outputs, skip_special_tokens=True))
     answers = [answer[-1] for answer in answers]
     return answers
 
@@ -240,7 +267,7 @@ def main(ckpt_dir: str, param_size: str, model_type: str):
             label = test_df.iloc[i, test_df.shape[1] - 1]
             records.append({'prompt': prompt, 'answer': label})
 
-        pred_answers = batch_infer(model, tokenizer, [record['prompt'] for record in records])
+        pred_answers = batch_infer(model, tokenizer, [record['prompt'] for record in records], model_type)
         gold_answers = [record['answer'] for record in records]
         run_results[task] = {'pred_answers': pred_answers, 'gold_answers': gold_answers}
     with open(output_filename, 'w') as f:

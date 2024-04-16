@@ -21,6 +21,7 @@ RUN pip install autoawq
 # llama.cpp
 RUN apt-get install -y cmake
 RUN git clone https://github.com/ggerganov/llama.cpp
+RUN pip install gguf -i https://pypi.tuna.tsinghua.edu.cn/simple
 WORKDIR /llama.cpp
 RUN mkdir build
 WORKDIR /llama.cpp/build
