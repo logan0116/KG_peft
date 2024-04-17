@@ -27,3 +27,5 @@ RUN mkdir build
 WORKDIR /llama.cpp/build
 RUN cmake .. -DLLAMA_CUDA=ON
 RUN cmake --build . --config Release
+# python build
+RUN CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python
