@@ -90,10 +90,9 @@ result at epoch 30
 
 # stage_2
 
-这一阶段的基础是DBLP知识图谱
+~~这一阶段的基础是DBLP知识图谱~~
 
-节点包括：作者、论文、会议、领域、机构
-连接包括：作者-论文、论文-会议、论文-领域、作者-机构、论文-(cite)-论文
-属性包括：
-    论文：id, title, abstract, year, keywords, doi
-    作者：id, name
+我们需要两个针对领域的QA数据集
+    1.PubMedQA
+    2.StackExchange Data Dump
+

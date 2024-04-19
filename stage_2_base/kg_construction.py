@@ -156,7 +156,7 @@ def get_node_venue_fos():
 def get_link_author2paper():
     """
     从dblp_v14.json中提取author和paper的关系，包括：
-        author -> paper
+        author -> paper.md
     :return:
     """
     dblp_file_path = 'data'
@@ -183,7 +183,7 @@ def get_link_author2paper():
 def get_link_paper2venue_fos():
     """
     从dblp_v14.json中提取paper和venue, fos的关系，包括：
-        paper -> venue, fos
+        paper.md -> venue, fos
     :return:
     """
     dblp_file_path = 'data'
@@ -266,7 +266,7 @@ def get_link_author2org():
 def get_link_paper2paper():
     """
     从dblp_v14.json中提取paper和paper的关系，包括：
-        paper -> paper
+        paper.md -> paper.md
     :return:
     """
     dblp_file_path = 'data'
