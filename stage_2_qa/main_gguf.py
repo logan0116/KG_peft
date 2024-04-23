@@ -3,7 +3,6 @@
 
 
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from llama_cpp import Llama
 
 from tqdm import tqdm
@@ -41,16 +40,6 @@ def model_load(model_type, model_path):
     :param model_path: str, model path
 
     """
-    # Setting `pad_token_id` to `eos_token_id`:151645 for open-end generation.
-    # A decoder-only architecture is being used, but right-padding was detected!
-    # For correct generation results, please set `padding_side='left'` when initializing the tokenizer.
-    if model_type.startswith('qwen1.5'):
-        tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-7B-Chat",
-                                                  padding_side="left")
-    else:
-        tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B",
-                                                  padding_side="left")
-
     # model
     if model_type == 'llama3-gguf-q4_0':
         ckpt_dir = os.path.join(model_path, 'Meta-Llama-3-8B-Instruct.Q4_0.gguf')
@@ -66,9 +55,10 @@ def model_load(model_type, model_path):
         model_path=ckpt_dir,
         n_gpu_layers=32,  # Uncomment to use GPU acceleration
         n_ctx=3072,  # Uncomment to increase the context window
+        verbose=False
     )
 
-    return model, tokenizer
+    return model
 
 
 def data_process(data_set):
@@ -112,7 +102,7 @@ def qa_eval(model_type, model_path, data_set):
     # load data
     prompts, labels, question_list, context_list = data_process(data_set)
     # load model
-    model, tokenizer = model_load(model_type=model_type, model_path=model_path)
+    model = model_load(model_type=model_type, model_path=model_path)
 
     logging.info("Start evaluating..." + model_type)
 
@@ -130,7 +120,6 @@ def qa_eval(model_type, model_path, data_set):
         ]
         output = model.create_chat_completion(messages=history, max_tokens=1024, temperature=0.7)
         output = output['choices'][0]['message']['content'].strip()
-        print(output)
         predicts.append(output)
     end_time = time.time()
 
@@ -143,8 +132,11 @@ def qa_eval(model_type, model_path, data_set):
 
 
 if __name__ == '__main__':
-    qa_eval("qwen1.5-gguf-q4_0", "../model", "test")
-    acc_llm(model_type="qwen1.5-gguf-q4_0")
-    qa_eval("qwen1.5-gguf-q8_0", "../model", "test")
-    acc_llm(model_type="qwen1.5-gguf-q8_0")
-    # qa_eval("llama3-gguf-q4_0", "model", "test")
+    # qa_eval("qwen1.5-gguf-q4_0", "../model", "test")
+    # acc_llm(model_type="qwen1.5-gguf-q4_0")
+    # qa_eval("qwen1.5-gguf-q8_0", "../model", "test")
+    # acc_llm(model_type="qwen1.5-gguf-q8_0")
+    qa_eval("llama3-gguf-q4_0", "../model", "test")
+    acc_llm(model_type="llama3-gguf-q4_0")
+    qa_eval("llama3-gguf-q8_0", "../model", "test")
+    acc_llm(model_type="llama3-gguf-q8_0")

@@ -59,7 +59,7 @@ def acc_llm(model_type):
     # calculate accuracy
     correct_count = 0
     # start time
-    logging.info("Start 'awq gguf' evaluating...")
+    logging.info(f"Start {model_type} evaluating...")
     time_start = time.time()
     for data in tqdm(data_list):
         prompt = ("Question: " + data['question'] +
@@ -84,7 +84,6 @@ def acc_llm(model_type):
     accuracy = correct_count / len(data_list)
     logging.info("Accuracy: %s" % accuracy)
     logging.info("Time: %s" % (time_end - time_start))
-
 
 # if __name__ == '__main__':
 #     acc_llm("gguf")
