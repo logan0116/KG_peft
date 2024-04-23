@@ -2,6 +2,7 @@ import json
 import requests
 import logging
 import time
+from tqdm import tqdm
 
 # logging config
 logging.basicConfig(level=logging.INFO,
@@ -46,24 +47,25 @@ def qa_eval_llm(model_type):
         data_list = json.load(f)
 
     # history
-    history = {
-        "role": "system",
-        "content": 'In a QA task, we predict an answer based on the "Question" and "Content". ' +
-                   'Please determine whether the "Answer" matches the "Label". ' +
-                   'If the answer matches the label, respond with "True". If it does not match, respond with "False".' +
-                   'The match does not require identical wording; rather, the content must convey the same meaning. '
-    }
+    history = [
+        {"role": "system",
+         "content": 'In a QA task, we predict an answer based on the "Question" and "Content". ' +
+                    'Please determine whether the "Answer" matches the "Label". ' +
+                    'If the answer matches the label, respond with "True". If it does not match, respond with "False".' +
+                    'The match does not require identical wording; rather, the content must convey the same meaning. '
+         }
+    ]
 
     # calculate accuracy
     correct_count = 0
     # start time
-    logging.info("Start evaluating...")
+    logging.info("Start 'awq gguf' evaluating...")
     time_start = time.time()
-    for data in data_list:
+    for data in tqdm(data_list):
         prompt = ("Question: " + data['question'] +
                   "\nContent: " + data['context'] +
                   "\nLabel: " + data['label'] +
-                  "\nAnswer: " + data['answer'])
+                  "\nAnswer: " + data['predict'])
         req = {
             "inputs": prompt,
             "history": history
@@ -73,7 +75,7 @@ def qa_eval_llm(model_type):
         response = requests.post("http://192.168.1.114:9010/api/smart_qa/chat", json=req)
         output = response.json()['data']
 
-        if output == "True":
+        if "True" in output:
             correct_count += 1
 
     # end time

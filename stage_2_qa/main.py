@@ -150,8 +150,8 @@ if __name__ == '__main__':
     # qa_eval('../quantization_test/Qwen1.5-7B-Chat-awq-4bit-128gr/',
     #         'awq', 'test')
     #
-    qa_eval('../chat_server/Qwen1.5-7B-Chat-q4_0.gguf',
-            'gguf', 'test', part=args.part)
+    # qa_eval('../quantization_test/Qwen1.5-7B-Chat-q4_0.gguf',
+    #         'gguf', 'test', part=args.part)
     #
-    # qa_eval('../quantization_test/Qwen1.5-7B-Chat-awq-q4_0.gguf',
-    #         'gguf', 'test')
+    qa_eval('../quantization_test/Qwen1.5-7B-Chat-awq-q4_0.gguf',
+            'gguf', 'test')
