@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
 
 
-def qa_eval_llm(model_type):
+def acc_llm(model_type):
     """
     借助大语言模型对QA结果进行评估
 
@@ -43,7 +43,7 @@ def qa_eval_llm(model_type):
 
     """
     # load data
-    with open('data/qa_{}_result.json'.format(model_type), 'r', encoding='utf-8') as f:
+    with open('data/qa_result_{}.json'.format(model_type), 'r', encoding='utf-8') as f:
         data_list = json.load(f)
 
     # history
@@ -86,5 +86,5 @@ def qa_eval_llm(model_type):
     logging.info("Time: %s" % (time_end - time_start))
 
 
-if __name__ == '__main__':
-    qa_eval_llm("gguf")
+# if __name__ == '__main__':
+#     acc_llm("gguf")

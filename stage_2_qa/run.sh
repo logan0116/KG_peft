@@ -9,5 +9,5 @@ docker run \
   -v /home/mozinodej/PycharmProjects/Kg_peft/:/Kg_peft/ \
   -w /Kg_peft/stage_2_qa/ \
   llm:v1.4 \
-  python3 main.py --part 0
+  python3 main_gguf.py
 

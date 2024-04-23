@@ -154,4 +154,4 @@ if __name__ == '__main__':
     #         'gguf', 'test', part=args.part)
     #
     qa_eval('../quantization_test/Qwen1.5-7B-Chat-awq-q4_0.gguf',
-            'gguf', 'test')
+            'gguf', 'test', part=args.part)
