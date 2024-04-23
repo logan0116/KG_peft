@@ -40,9 +40,7 @@ def data_process4qa(data_set="train"):
 
     data_list = data['data']
 
-    question_list = []
-    context_list = []
-    answer_list = []
+    question2info = {}
 
     for data in tqdm(data_list):
         paragraphs = data['paragraphs']
@@ -52,14 +50,16 @@ def data_process4qa(data_set="train"):
             for qa in qas:
                 question = qa['question']
                 answers = qa['answers']
+                if len(answers) == 0:
+                    continue
+                if question in question2info:
+                    continue
 
-                for answer in answers:
-                    question_list.append(question)
-                    context_list.append(context)
-                    answer_list.append(answer['text'])
+                # add
+                question2info[question] = {'context': context, 'answer': answers[0]['text']}
 
-    data = [{"question": question, "context": context, "answer": answer}
-            for question, context, answer in zip(question_list, context_list, answer_list)]
+    data = [{"question": question, "context": info['context'], "answer": info['answer']}
+            for question, info in question2info.items()]
 
     print("data length:", len(data))
 
@@ -72,5 +72,3 @@ def data_process4qa(data_set="train"):
 if __name__ == '__main__':
     data_process4qa("train")
     data_process4qa("test")
-
-

@@ -77,13 +77,21 @@ def data_process(data_set, part=None):
     prompt_list = []
     label_list = []
 
+    # for eval
+    question_list = []
+    context_list = []
+
     for data in data_list:
-        prompt_list.append('For [question], please answer according to [context].\n' +
+        prompt_list.append('For [question], please answer according to [context]. ' +
+                           '(Note: please keep answers simple and clear.)\n' +
                            '[question] ' + data['question'] + '\n' +
                            '[context] ' + data['context'] + '\n')
         label_list.append(data['answer'])
+        # for eval
+        question_list.append(data['question'])
+        context_list.append(data['context'])
 
-    return prompt_list, label_list
+    return prompt_list, label_list, question_list, context_list
 
 
 def qa_eval(ckpt_dir, model_type, data_set, part=None):
@@ -92,7 +100,7 @@ def qa_eval(ckpt_dir, model_type, data_set, part=None):
     zh:评估
     """
     # load data
-    prompts, labels = data_process(data_set, part=part)
+    prompts, labels, question_list, context_list = data_process(data_set, part=part)
     # load model
     model, tokenizer = load(ckpt_dir, model_type)
 
@@ -102,8 +110,9 @@ def qa_eval(ckpt_dir, model_type, data_set, part=None):
     start_time = time.time()
     for prompt in tqdm(prompts):
         if model_type == 'gguf':
-            output = model(prompt, stop=["Q:", "\n"])
+            output = model(prompt)
             output = output['choices'][0]['text'].strip()
+            print(output)
             predicts.append(output)
         else:
             inputs = tokenizer(prompt, return_tensors="pt")
@@ -115,24 +124,25 @@ def qa_eval(ckpt_dir, model_type, data_set, part=None):
     end_time = time.time()
 
     # calculate accuracy
-    correct_count = 0
-    for label, predict in zip(labels, predicts):
-        if label == predict:
-            correct_count += 1
-
-    accuracy = correct_count / len(labels)
-    logging.info("Accuracy: %s" % accuracy)
+    # correct_count = 0
+    # for label, predict in zip(labels, predicts):
+    #     if label in predict:
+    #         correct_count += 1
+    #
+    # accuracy = correct_count / len(labels)
+    # logging.info("Accuracy: %s" % accuracy)
     logging.info("Time: %s" % (end_time - start_time))
     # save label and predict
-    with open('data/qa_{}_result.json'.format(ckpt_dir), 'w', encoding='utf-8') as f:
-        data_list = [{"label": label, "predict": predict} for label, predict in zip(labels, predicts)]
+    with open('data/qa_{}_result.json'.format(model_type), 'w', encoding='utf-8') as f:
+        data_list = [{'question': question, 'context': context, 'label': label, 'predict': predict}
+                     for question, context, label, predict in zip(question_list, context_list, labels, predicts)]
         json.dump(data_list, f, ensure_ascii=False, indent=4)
 
 
 if __name__ == '__main__':
     args = parameter_parser()
-    qa_eval('../quantization_test/Qwen1.5-7B-Chat-gptq-4bit-128gr-desc-act/',
-            'gptq', 'test', part=args.part)
+    # qa_eval('../quantization_test/Qwen1.5-7B-Chat-gptq-4bit-128gr-desc-act/',
+    #         'gptq', 'test', part=args.part)
 
     # qa_eval('../quantization_test/Qwen1.5-7B-Chat-gptq-4bit-128gr-no-desc-act/',
     #         'gptq', 'test')
@@ -140,8 +150,8 @@ if __name__ == '__main__':
     # qa_eval('../quantization_test/Qwen1.5-7B-Chat-awq-4bit-128gr/',
     #         'awq', 'test')
     #
-    # qa_eval('../quantization_test/Qwen1.5-7B-Chat-q4_0.gguf',
-    #         'gguf', 'test')
+    qa_eval('../chat_server/Qwen1.5-7B-Chat-q4_0.gguf',
+            'gguf', 'test', part=args.part)
     #
     # qa_eval('../quantization_test/Qwen1.5-7B-Chat-awq-q4_0.gguf',
     #         'gguf', 'test')
