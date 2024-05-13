@@ -69,6 +69,37 @@ def data_process4qa(data_set="train"):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
+def data_process4sft():
+    """
+    dataset for sft
+    """
+    data_list = []
+
+    # load data
+    with open('data/train_qa.json', 'r', encoding='utf-8') as f:
+        qa_list = json.load(f)
+
+    for qa in qa_list:
+        question = qa['question']
+        context = qa['context']
+        answer = qa['answer']
+
+        prompt = 'For "Question", please answer according to "Content". (Note: please keep answers simple and clear.)'
+        inputs = '"Question": ' + question + '\n"Content": ' + context
+        outputs = answer
+
+        data_list.append({"instruction": prompt, "inputs": inputs, "outputs": outputs})
+
+    print("data length:", len(data_list))
+
+    # save data
+    save_path = 'data/squad_qa_data.json'
+    with open(save_path, 'w', encoding='utf-8') as f:
+        json.dump(data_list, f, ensure_ascii=False, indent=4)
+
+
 if __name__ == '__main__':
-    data_process4qa("train")
-    data_process4qa("test")
+    # data_process4qa("train")
+    # data_process4qa("test")
+
+    data_process4sft()

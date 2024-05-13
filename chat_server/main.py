@@ -23,9 +23,10 @@ app = FastAPI()
 
 # load model
 llm = Llama(
-    model_path='qwen1_5-32b-chat-q4_k_m.gguf',
-    n_gpu_layers=65,  # Uncomment to use GPU acceleration
-    n_ctx=3072,  # Uncomment to increase the context window
+    # model_path='Meta-Llama-3-70B-Instruct.Q4_K_M.gguf',
+    model_path='Meta-Llama-3-8B-Instruct.Q4_1.gguf',
+    n_gpu_layers=100,  # Uncomment to use GPU acceleration
+    n_ctx=2048,  # Uncomment to increase the context window
 )
 
 

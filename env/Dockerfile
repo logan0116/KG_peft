@@ -26,3 +26,6 @@ RUN cmake .. -DLLAMA_CUDA=ON
 RUN cmake --build . --config Release
 # python build
 RUN CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python
+# transformers update
+RUN pip install git+https://github.com/huggingface/transformers.git
+RUN pip install transformers==4.40.2 trl==0.8.1 --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple

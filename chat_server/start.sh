@@ -4,9 +4,8 @@
     --network=host \
     --name chat_server \
     --gpus all \
-    --shm-size 32G \
-    -v /root/.cache/huggingface/hub/:/root/.cache/huggingface/hub/ \
-    -v /home/python_projects/Kg_peft:/Kg_peft \
-    -w /Kg_peft/chat_server \
+    --shm-size 64G \
+    -v /home/mozinode4p/PycharmProjects/KG_peft/chat_server:/chat_server \
+    -w /chat_server \
     llm:v1.4 \
     python3 main.py --port 9010
