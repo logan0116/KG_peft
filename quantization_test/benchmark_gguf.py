@@ -166,40 +166,19 @@ def prepare_input(tokenizer, prompts):
     return input_tokens
 
 
-def load(ckpt_dir, model_type):
+def load(ckpt_dir):
     """
     en:Load the model
     zh:加载模型
     """
-    # Setting `pad_token_id` to `eos_token_id`:151645 for open-end generation.
-    # A decoder-only architecture is being used, but right-padding was detected!
-    # For correct generation results, please set `padding_side='left'` when initializing the tokenizer.
-    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-7B-Chat", padding_side="left")
 
-    if model_type == 'gptq':
-        model = AutoGPTQForCausalLM.from_quantized(ckpt_dir)
-        logging.info("GPTQ Model loaded from %s" % ckpt_dir)
-    elif model_type == 'awq':
-        model = AutoAWQForCausalLM.from_pretrained(ckpt_dir)
-        logging.info("AWQ Model loaded from %s" % ckpt_dir)
-    elif model_type == 'gguf':
-        model = Llama(
-            model_path=ckpt_dir,
-            n_gpu_layers=32,  # Uncomment to use GPU acceleration
-            n_ctx=3072,  # Uncomment to increase the context window
-        )
+    model = Llama(
+        model_path=ckpt_dir,
+        n_gpu_layers=100,  # Uncomment to use GPU acceleration
+        n_ctx=2048,  # Uncomment to increase the context window
+    )
 
-    else:
-        model = AutoModelForCausalLM.from_pretrained(ckpt_dir,
-                                                     torch_dtype=torch.float16,
-                                                     trust_remote_code=True)
-
-    if model_type != 'gguf':
-        # cuda
-        model = model.to('cuda')
-        model.eval()
-
-    return model, tokenizer
+    return model
 
 
 def batch_split(prompts, batch_num):
@@ -215,14 +194,12 @@ def batch_split(prompts, batch_num):
     return batch_prompts
 
 
-def batch_infer(model, tokenizer, prompts, model_type):
+def batch_infer(model, prompts):
     """
     en:Batch inference
     zh:批量推理
     :param model:
-    :param tokenizer:
     :param prompts:
-    :param model_type:
 
 
     gguf mode example
@@ -259,30 +236,25 @@ def batch_infer(model, tokenizer, prompts, model_type):
     """
 
     batch_size = 1
-    if model_type == 'gguf':
-        batch_size = 1
     answers = []
     for batch_input in tqdm(batch_split(prompts, batch_size)):
-        if model_type == 'gguf':
-            for prompt in batch_input:
-                output = model(prompt, max_tokens=32, stop=["Q:", "\n"])
-                output = output['choices'][0]['text'].strip()
-                if output == '':
-                    output = ' '
-                answers.append(output)
-        else:
-            encode_inputs = prepare_input(tokenizer, batch_input)
-            outputs = model.generate(**encode_inputs, max_new_tokens=1, pad_token_id=tokenizer.eos_token_id)
-            answers.extend(tokenizer.batch_decode(outputs, skip_special_tokens=True))
+        for prompt in batch_input:
+            output = model(prompt, max_tokens=32, stop=["Q:", "\n"])
+            output = output['choices'][0]['text'].strip()
+            if output == '':
+                output = ' '
+            answers.append(output)
     answers = [answer[-1] for answer in answers]
     return answers
 
 
-def main(ckpt_dir: str, param_size: str, model_type: str):
+def main(ckpt_dir: str, param_size: str):
     run_results = {}
-    output_filename = 'run_results_%s_%sb.json' % (model_type, param_size)
+    output_filename = 'run_results_qwen_1.5_gguf_%sb.json' % (param_size)
 
-    model, tokenizer = load(ckpt_dir, model_type)
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen1.5-7B-Chat", padding_side="left")
+
+    model = load(ckpt_dir)
     start_time = time.time()
     for task in TASKS:
         print('Testing %s ...' % task)
@@ -295,14 +267,14 @@ def main(ckpt_dir: str, param_size: str, model_type: str):
             prompt_end = format_example(test_df, i, include_answer=False)
             train_prompt = gen_prompt(dev_df, task, k)
             prompt = train_prompt + prompt_end
-            while len(tokenizer.tokenize(prompt)) + 1 > 3072:  # bos token
+            while len(tokenizer.tokenize(prompt)) + 1 > 2048:  # bos token
                 prompt_split = prompt.split("\n\n")
                 prompt_split.pop(1)
                 prompt = '\n\n'.join(prompt_split)
             label = test_df.iloc[i, test_df.shape[1] - 1]
             records.append({'prompt': prompt, 'answer': label})
 
-        pred_answers = batch_infer(model, tokenizer, [record['prompt'] for record in records], model_type)
+        pred_answers = batch_infer(model, [record['prompt'] for record in records])
         gold_answers = [record['answer'] for record in records]
         run_results[task] = {'pred_answers': pred_answers, 'gold_answers': gold_answers}
     with open(output_filename, 'w') as f:
@@ -317,9 +289,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--ckpt_dir', type=str, required=True)
     parser.add_argument('--param_size', type=str, required=True)
-    parser.add_argument('--model_type', type=str, required=True)
     parser.add_argument('--data_dir', type=str, default='data/')
     parser.add_argument('--ntrain', type=int, default=5)
     args = parser.parse_args()
 
-    main(args.ckpt_dir, args.param_size, args.model_type)
+    main(args.ckpt_dir, args.param_size)
