@@ -72,7 +72,7 @@ def acc_llm(model_type):
         }
 
         # post api
-        response = requests.post("http://192.168.1.114:9010/api/smart_qa/chat", json=req)
+        response = requests.post("http://192.168.1.115:9010/api/smart_qa/chat", json=req)
         output = response.json()['data']
 
         if "True" in output:

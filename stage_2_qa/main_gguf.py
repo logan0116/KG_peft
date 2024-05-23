@@ -47,8 +47,8 @@ def model_load(model_type, model_path):
         ckpt_dir = os.path.join(model_path, 'Meta-Llama-3-8B-Instruct.Q8_0.gguf')
     elif model_type == 'qwen1.5-gguf-q4_0':
         ckpt_dir = os.path.join(model_path, 'qwen1_5-7b-chat-q4_0.gguf')
-    elif model_type == 'qwen1.5-gguf-q8_0':
-        ckpt_dir = os.path.join(model_path, 'qwen1_5-7b-chat-q8_0.gguf')
+    elif model_type == 'qwen1.5-gguf-lora-q4_0':
+        ckpt_dir = os.path.join(model_path, 'qwen1_5-7b-chat-lora-q4_0.gguf')
     else:
         raise ValueError("model_type not currently supported")
     model = Llama(
@@ -133,10 +133,10 @@ def qa_eval(model_type, model_path, data_set):
 
 if __name__ == '__main__':
     # qa_eval("qwen1.5-gguf-q4_0", "../model", "test")
-    # acc_llm(model_type="qwen1.5-gguf-q4_0")
+    acc_llm(model_type="qwen1.5-gguf-q4_0")
     # qa_eval("qwen1.5-gguf-q8_0", "../model", "test")
     # acc_llm(model_type="qwen1.5-gguf-q8_0")
-    qa_eval("llama3-gguf-q4_0", "../model", "test")
-    acc_llm(model_type="llama3-gguf-q4_0")
-    qa_eval("llama3-gguf-q8_0", "../model", "test")
-    acc_llm(model_type="llama3-gguf-q8_0")
+    # qa_eval("llama3-gguf-q4_0", "../model", "test")
+    # acc_llm(model_type="llama3-gguf-q4_0")
+    # qa_eval("qwen1.5-gguf-lora-q4_0", "../model", "test")
+    acc_llm(model_type="qwen1.5-gguf-lora-q4_0")
