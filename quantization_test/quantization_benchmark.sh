@@ -9,4 +9,4 @@ docker run \
   -v /home/mozinode4p/PycharmProjects/KG_peft/:/Kg_peft/ \
   -w /Kg_peft/quantization_test/ \
   llm:v1.4.1 \
-  python3 benchmark_gguf.py --ckpt_dir /Kg_peft/model/qwen1_5-72b-chat-q4_0.gguf --param_size 72b
+  python3 benchmark_gguf.py --ckpt_dir /Kg_peft/model/qwen1_5-110b-chat-q2_k.gguf --param_size 110b

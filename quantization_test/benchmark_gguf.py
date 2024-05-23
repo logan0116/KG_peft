@@ -175,7 +175,7 @@ def load(ckpt_dir):
     model = Llama(
         model_path=ckpt_dir,
         n_gpu_layers=100,  # Uncomment to use GPU acceleration
-        n_ctx=2048,  # Uncomment to increase the context window
+        n_ctx=2304,  # Uncomment to increase the context window
     )
 
     return model
@@ -294,3 +294,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.ckpt_dir, args.param_size)
+    # compute_metric('run_results_qwen_1.5_gguf_{}b.json'.format(args.param_size))
